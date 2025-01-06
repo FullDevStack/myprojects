@@ -1,0 +1,597 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Musterfinanzierung</title>
+    <script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@3/dist/email.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+        }
+
+        body {
+            background-color: #f5f5f5;
+            padding: 2rem;
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .calculator {
+            background: white;
+            padding: 2rem;
+            border-radius: 1rem;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            width: 100%;
+            max-width: 800px;
+        }
+
+        .info-text {
+            margin-bottom: 2rem;
+            padding-bottom: 1rem;
+            border-bottom: 1px solid #eee;
+            color: #555;
+            line-height: 1.5;
+        }
+
+        .required-field::after {
+            content: "*";
+            color: #ff4444;
+            margin-left: 4px;
+        }
+
+        .form-group {
+            margin-bottom: 1.5rem;
+        }
+
+        .form-row {
+            display: flex;
+            gap: 1rem;
+            margin-bottom: 1rem;
+        }
+
+        .form-col {
+            flex: 1;
+        }
+
+        input[type="text"],
+        input[type="email"],
+        input[type="tel"],
+        textarea {
+            width: 100%;
+            padding: 0.75rem;
+            border: 1px solid #ddd;
+            border-radius: 0.5rem;
+            font-size: 1rem;
+        }
+
+        textarea {
+            min-height: 100px;
+            resize: vertical;
+        }
+
+        .divider {
+            height: 1px;
+            background: #eee;
+            margin: 2rem 0;
+        }
+
+        h1 {
+            font-size: 2rem;
+            color: #333;
+            margin-bottom: 2rem;
+        }
+
+        .input-group {
+            margin-bottom: 1.5rem;
+        }
+
+        label {
+            display: block;
+            font-size: 1.2rem;
+            color: #555;
+            margin-bottom: 0.5rem;
+        }
+
+        .input-row {
+            display: flex;
+            gap: 1rem;
+            align-items: center;
+        }
+
+        .slider {
+            flex: 1;
+            height: 8px;
+            background: #e0e0ff;
+            border-radius: 4px;
+            outline: none;
+            -webkit-appearance: none;
+        }
+
+        .slider::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            width: 20px;
+            height: 20px;
+            background: #4466ff;
+            border-radius: 50%;
+            cursor: pointer;
+            transition: background 0.15s ease;
+        }
+
+        .slider::-webkit-slider-thumb:hover {
+            background: #3355ee;
+        }
+
+        .number-input {
+            width: 160px;
+            padding: 0.5rem;
+            border: 1px solid #ddd;
+            border-radius: 0.5rem;
+            font-size: 1rem;
+            padding-right: 3rem;
+        }
+
+        .unit {
+            position: absolute;
+            right: 0.75rem;
+            top: 50%;
+            transform: translateY(-50%);
+            color: #666;
+        }
+
+        .duration-months {
+            color: #666;
+            font-size: 0.9rem;
+            margin-top: 0.25rem;
+            display: block;
+        }
+
+        .button-group {
+            display: flex;
+            gap: 1rem;
+            margin-top: 2rem;
+        }
+
+        .button {
+            flex: 1;
+            padding: 1rem;
+            border: none;
+            border-radius: 0.5rem;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .button-primary {
+            background: #4466ff;
+            color: white;
+        }
+
+        .button-primary:hover {
+            background: #3355ee;
+        }
+
+        .button-secondary {
+            background: #f0f0f0;
+            color: #333;
+        }
+
+        .button-secondary:hover {
+            background: #e5e5e5;
+        }
+
+        #submitLoan {
+            display: none;
+            width: 100%;
+            margin-top: 1rem;
+            background: #44bb66;
+        }
+
+        #submitLoan:hover {
+            background: #33aa55;
+        }
+
+        .results-container {
+            display: none;
+            margin-top: 2rem;
+            animation: fadeIn 0.3s ease-out;
+        }
+
+        .results-list {
+            list-style: none;
+            padding: 0;
+        }
+
+        .results-list li {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 1rem 0;
+            border-top: 1px solid #eee;
+        }
+
+        .results-list li:last-child {
+            border-bottom: 1px solid #eee;
+        }
+
+        .result-label {
+            font-size: 1.1rem;
+            color: #555;
+        }
+
+        .result-value {
+            font-size: 1.5rem;
+            color: #4466ff;
+            font-weight: 600;
+        }
+
+        .popup {
+            display: none;
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: white;
+            padding: 2rem;
+            border-radius: 1rem;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
+            z-index: 1000;
+            text-align: center;
+        }
+
+        .popup.show {
+            display: block;
+        }
+
+        .overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.5);
+            z-index: 999;
+        }
+
+        .overlay.show {
+            display: block;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(-10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .visible {
+            display: block;
+        }
+    </style>
+</head>
+<body>
+    <div class="calculator">
+        <div class="info-text">
+            Sie können diesen Kreditrechner verwenden für ihre Kontrolle. Wenn Sie jedoch einen Kredit beantragen wollen,
+            brauchen wir von Ihnen die erforderlichen Daten mit rotem Stern gekennzeichnet.
+        </div>
+
+        <div class="form-group">
+            <div class="form-row">
+                <div class="form-col">
+                    <label class="required-field">Vorname</label>
+                    <input type="text" id="firstName" required>
+                </div>
+                <div class="form-col">
+                    <label class="required-field">Nachname</label>
+                    <input type="text" id="lastName" required>
+                </div>
+            </div>
+            <div class="form-row">
+                <div class="form-col">
+                    <label class="required-field">Email</label>
+                    <input type="email" id="email" required>
+                </div>
+                <div class="form-col">
+                    <label class="required-field">Telefon</label>
+                    <input type="tel" id="phone" required>
+                </div>
+            </div>
+            <div class="form-row">
+                <div class="form-col">
+                    <label>Ihre Frage (Optional)</label>
+                    <textarea id="question"></textarea>
+                </div>
+            </div>
+        </div>
+
+        <div class="divider"></div>
+
+        <h1>Finanzierungsrechner</h1>
+        
+        <div class="input-group">
+            <label>Kreditsumme</label>
+            <div class="input-row">
+                <input type="range" class="slider" id="creditAmount" min="1000" max="1000000" step="1000" value="30000">
+                <div style="position: relative">
+                    <input type="number" class="number-input" id="creditAmountNumber" value="30000" min="1000" max="1000000">
+                    <span class="unit">€</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="input-group">
+            <label>Soll Zinssatz</label>
+            <div class="input-row">
+                <input type="range" class="slider" id="interestRate" min="0" max="15" step="0.1" value="5.8">
+                <div style="position: relative">
+                    <input type="number" class="number-input" id="interestRateNumber" value="5.8" min="0">
+                    <span class="unit">% p.a</span>
+                </div>
+            </div>
+            <span id="effectiveRate">6.00% p.a</span>
+        </div>
+
+        <div class="input-group">
+            <label>Laufzeit</label>
+            <div class="input-row">
+                <input type="range" class="slider" id="duration" min="1" max="30" step="1" value="10">
+                <div style="position: relative">
+                    <input type="number" class="number-input" id="durationNumber" value="10" min="1">
+                    <span class="unit">Jahre</span>
+                </div>
+            </div>
+            <span class="duration-months" id="durationMonths">120 Monate</span>
+        </div>
+
+        <div class="button-group">
+            <button class="button button-primary" id="calculateButton">Berechnen</button>
+            <button class="button button-secondary" id="resetButton">Zurücksetzen</button>
+        </div>
+
+        <div class="results-container" id="results">
+            <ul class="results-list" id="resultsList"></ul>
+            <button class="button button-primary" id="submitLoan">Wunschkredit jetzt senden</button>
+        </div>
+    </div>
+
+    <div class="overlay" id="overlay"></div>
+    <div class="popup" id="thankYouPopup">
+        <div class="popup-message">
+            Vielen Dank, wir haben ihre Anfrage erhalten.<br>
+            Wir melden uns so schnell wie möglich.
+        </div>
+    </div>
+
+    <script>
+        // Initialize EmailJS
+        emailjs.init("3geN1DIt-rp4yQYwZ");
+
+        function formatCurrency(amount) {
+            return new Intl.NumberFormat('de-DE', {
+                style: 'currency',
+                currency: 'EUR',
+                minimumFractionDigits: 0,
+                maximumFractionDigits: 0
+            }).format(amount);
+        }
+
+        function calculateMonthlyPayment(creditAmount, interestRate, duration) {
+            if (interestRate === 0) {
+                return creditAmount / (duration * 12);
+            }
+            const monthlyInterest = interestRate / 100 / 12;
+            const totalPayments = duration * 12;
+            return (creditAmount * monthlyInterest * Math.pow(1 + monthlyInterest, totalPayments)) / 
+                   (Math.pow(1 + monthlyInterest, totalPayments) - 1);
+        }
+
+        function calculateMonthlyInterest(creditAmount, interestRate) {
+            return (creditAmount * (interestRate / 100)) / 12;
+        }
+
+        function calculateTotalInterest(monthlyPayment, duration, creditAmount) {
+            return (monthlyPayment * duration * 12) - creditAmount;
+        }
+
+        class LoanCalculator {
+            constructor() {
+                this.initializeElements();
+                this.setupEventListeners();
+                this.updateEffectiveRate();
+                this.updateDurationMonths();
+            }
+
+            initializeElements() {
+                this.elements = {
+                    creditAmount: document.getElementById('creditAmount'),
+                    creditAmountNumber: document.getElementById('creditAmountNumber'),
+                    interestRate: document.getElementById('interestRate'),
+                    interestRateNumber: document.getElementById('interestRateNumber'),
+                    duration: document.getElementById('duration'),
+                    durationNumber: document.getElementById('durationNumber'),
+                    durationMonths: document.getElementById('durationMonths'),
+                    results: document.getElementById('results'),
+                    calculateButton: document.getElementById('calculateButton'),
+                    resetButton: document.getElementById('resetButton'),
+                    submitLoan: document.getElementById('submitLoan')
+                };
+            }
+
+            setupEventListeners() {
+                this.syncInputs('creditAmount', 'creditAmountNumber');
+                this.syncInputs('interestRate', 'interestRateNumber');
+                this.syncInputs('duration', 'durationNumber');
+
+                this.elements.duration.addEventListener('input', () => this.updateDurationMonths());
+                this.elements.durationNumber.addEventListener('input', () => this.updateDurationMonths());
+                
+                this.elements.calculateButton.addEventListener('click', () => this.calculate());
+                this.elements.resetButton.addEventListener('click', () => this.reset());
+                this.elements.submitLoan.addEventListener('click', () => this.submitLoanRequest());
+            }
+
+            syncInputs(sliderId, numberId) {
+                const slider = this.elements[sliderId];
+                const number = this.elements[numberId];
+
+                slider.addEventListener('input', () => {
+                    number.value = slider.value;
+                    this.updateEffectiveRate();
+                });
+
+                number.addEventListener('input', () => {
+                    let value = parseFloat(number.value);
+                    const min = parseFloat(number.min);
+                    const max = parseFloat(number.max);
+
+                    if (value < min) value = min;
+                    if (value > max) value = max;
+
+                    slider.value = value;
+                    number.value = value;
+                    this.updateEffectiveRate();
+                });
+            }
+
+            updateEffectiveRate() {
+                const nominalRate = parseFloat(this.elements.interestRate.value);
+                const effectiveRate = ((Math.pow(1 + nominalRate / 100 / 12, 12) - 1) * 100).toFixed(2);
+                document.getElementById('effectiveRate').textContent = `${effectiveRate}% p.a`;
+            }
+
+            updateDurationMonths() {
+                const months = this.elements.duration.value * 12;
+                this.elements.durationMonths.textContent = `${months} Monate`;
+            }
+
+            calculate() {
+                const creditAmount = parseFloat(this.elements.creditAmount.value);
+                const interestRate = parseFloat(this.elements.interestRate.value);
+                const duration = parseFloat(this.elements.duration.value);
+                const months = duration * 12;
+
+                const monthlyPayment = calculateMonthlyPayment(creditAmount, interestRate, duration);
+                const monthlyInterest = calculateMonthlyInterest(creditAmount, interestRate);
+                const totalInterest = calculateTotalInterest(monthlyPayment, duration, creditAmount);
+                const totalAmount = creditAmount + totalInterest;
+
+                const results = {
+                    'Auszahlung': creditAmount,
+                    'Monatliche Rate': monthlyPayment,
+                    'Zinsen pro Monat': monthlyInterest,
+                    'Anzahl Monate': months,
+                    'Gesamtzinsen': totalInterest,
+                    'Gesamtkreditbetrag': totalAmount
+                };
+
+                const resultsHtml = Object.entries(results).map(([label, value]) => {
+                    const formattedValue = label === 'Anzahl Monate' ? value : formatCurrency(Math.round(value));
+                    return `
+                        <li>
+                            <span class="result-label">${label}:</span>
+                            <span class="result-value">${formattedValue}</span>
+                        </li>`;
+                }).join('');
+
+                document.getElementById('resultsList').innerHTML = resultsHtml;
+                this.elements.results.classList.add('visible');
+                this.elements.submitLoan.style.display = 'block';
+            }
+
+            reset() {
+                this.elements.creditAmount.value = 30000;
+                this.elements.creditAmountNumber.value = 30000;
+                this.elements.interestRate.value = 5.8;
+                this.elements.interestRateNumber.value = 5.8;
+                this.elements.duration.value = 10;
+                this.elements.durationNumber.value = 10;
+                this.updateEffectiveRate();
+                this.updateDurationMonths();
+                this.elements.results.classList.remove('visible');
+                this.elements.submitLoan.style.display = 'none';
+            }
+
+            async submitLoanRequest() {
+                const firstName = document.getElementById('firstName').value;
+                const lastName = document.getElementById('lastName').value;
+                const email = document.getElementById('email').value;
+                const phone = document.getElementById('phone').value;
+                const question = document.getElementById('question').value;
+
+                if (!firstName || !lastName || !email || !phone) {
+                    alert('Bitte füllen Sie alle erforderlichen Felder aus.');
+                    return;
+                }
+
+                const creditAmount = this.elements.creditAmount.value;
+                const interestRate = this.elements.interestRate.value;
+                const duration = this.elements.duration.value;
+
+                const templateParams = {
+                    to_email: 'edisduhan@gmail.com',
+                    from_name: `${firstName} ${lastName}`,
+                    from_email: email,
+                    subject: 'Neue Kreditanfrage',
+                    message: `
+Neue Kreditanfrage von:
+
+Name: ${firstName} ${lastName}
+Email: ${email}
+Telefon: ${phone}
+${question ? `Frage: ${question}\n` : ''}
+Kreditdetails:
+- Kreditsumme: ${formatCurrency(creditAmount)}
+- Zinssatz: ${interestRate}%
+- Laufzeit: ${duration} Jahre
+                    `.trim()
+                };
+
+                try {
+                    await emailjs.send(
+                        "service_ton6jtg",
+                        "template_finanzmuhic",
+                        templateParams
+                    );
+
+                    const popup = document.getElementById('thankYouPopup');
+                    const overlay = document.getElementById('overlay');
+                    popup.classList.add('show');
+                    overlay.classList.add('show');
+
+                    setTimeout(() => {
+                        popup.classList.remove('show');
+                        overlay.classList.remove('show');
+                    }, 5000);
+
+                    // Reset form
+                    document.getElementById('firstName').value = '';
+                    document.getElementById('lastName').value = '';
+                    document.getElementById('email').value = '';
+                    document.getElementById('phone').value = '';
+                    document.getElementById('question').value = '';
+                    this.reset();
+                } catch (error) {
+                    alert('Es gab einen Fehler beim Senden der Anfrage. Bitte versuchen Sie es später erneut.');
+                }
+            }
+        }
+
+        // Initialize calculator
+        document.addEventListener('DOMContentLoaded', () => {
+            new LoanCalculator();
+        });
+    </script>
+</body>
+</html>
